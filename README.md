@@ -2,7 +2,7 @@
 My clojure solutions and explanations for programming problems
 https://projecteuler.net/
 
-I found out about Project Euler from this areticle:
+I found out about Project Euler from this article:
 http://www.makeuseof.com/tag/4-reasons-shouldnt-learn-code-codeacademy/
 
 I was doing courses on codecademy at the time, and this is what I saw...
