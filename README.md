@@ -1,5 +1,5 @@
 # project-euler
-My clojure solutions and explanations for programming problems
+My clojure solutions and explanations for the programming problems found at
 https://projecteuler.net/
 
 I found out about Project Euler from this article:
