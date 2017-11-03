@@ -1,0 +1,15 @@
+The prime factors of 13195 are 5, 7, 13 and 29.
+
+What is the largest prime factor of the number 600851475143?
+
+(defn is-factor? [product candidate]
+  (= (rem product candidate) 0))
+
+(defn get-largest-prime-factor [product candidate]
+  (if (> candidate (int (Math/sqrt product)))
+    product
+    (if (= product candidate)
+      product
+      (if (is-factor? product candidate)
+        (recur (/ product candidate) candidate)
+        (recur product (+ candidate 1))))))
