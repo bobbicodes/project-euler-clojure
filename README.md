@@ -1,2 +1,3 @@
 # project-euler
-Solutions to programming problems
+My solutions and explanations for programming problems
+https://projecteuler.net/
