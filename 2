@@ -1,0 +1,163 @@
+Each new term in the Fibonacci sequence is generated
+by adding the previous two terms.
+By starting with 1 and 2, the first 10 terms will be:
+
+1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...
+
+By considering the terms in the Fibonacci sequence
+whose values do not exceed four million,
+find the sum of the even-valued terms.
+
+user> (defn fibo []
+        (map first (iterate (fn [[a b]] [b (+ a b)]) [0 1])))
+#'user/fibo
+user> (take 10 (fibo))
+(0 1 1 2 3 5 8 13 21 34)
+user> (reduce + (filter even? (take-while #(> 4000000 %) (fibo))))
+4613732
+
+user> (def fib-seq
+  (letfn [(seq0 [a b] (lazy-seq (cons a (seq0 b (+ a b)))))]
+    (seq0 1N 1N)))
+#'user/fib-seq
+user> (defn fib []
+  (->> fib-seq
+       (filter even?)
+       (take-while #(< % 4000000))
+       (reduce +)))
+#'user/fib
+user> (take 10 fib-seq)
+(1N 1N 2N 3N 5N 8N 13N 21N 34N 55N)
+user> (fib)
+4613732N
+
+Let’s define the Fibonacci sequence first:
+
+(def fibo (lazy-cat [0 1]
+                    (map + fibo (rest fibo))))
+
+A nice and simple recursive definition.
+
+lazy-cat - Expands to code which yields a lazy sequence
+of the concatenation of the supplied colls.
+Each coll expr is not evaluated until it is needed.
+
+This is exactly what we need as the Fibonacci sequence is infinite
+so we surely don’t want to automatically realize it’s elements :)
+
+Now we need to add up the even items of the lazy sequence until we reach 4m:
+
+(reduce + (take-while (partial >= 4000000)
+                      (filter even? fibo)))
+
+take-while: Returns a lazy sequence of successive items from coll while the predicate (here partial >= 4000000) returns true
+partial: returns a partial of the original function with fewer parameters. We could have also used an anonymous function here: #(even? %)
+
+The first expression generates all Fibonacci numbers given a vector containing [1 2]. The function given to iterate will produce vectors on the form ([1 2] [2 3] [3 5] ...). We grab the first element of each vector (giving the Fibonacci sequence) and filter the sequence so that it only contains even numbers. By using take-while we terminate the sequence when a $n$ is 4000000 or higher, and finally we take the sum.
+
+(->> (iterate (fn [[a b]] [b (+ a b)]) [1 2])
+     (map first)
+     (filter even?)
+     (take-while #(< % 4000000))
+     (apply +))
+
+user> (defn fib [n] (if (> 4 n) n (+ (fib (- n 1)) (fib (- n 2)))))
+#'user/fib
+user> (map fib (range 10))
+(0 1 2 3 5 8 13 21 34 55)
+
+How this works:
+
+(defn fib [n]
+  (if (> 4 n)
+      n
+      (+ (fib (- n 1))
+         (fib (- n 2)))))
+
+user> (fib 0)
+0
+user> (fib 1)
+1
+user> (fib 2)
+2
+user> (fib 3)
+3
+user> (fib 4)
+5
+
+Ok, so 4 is not less than 4, so instead we do this:
+(+ (fib (- n 1))
+   (fib (- n 2)))))
+
+add together the result of calling fib with 4 - 1, which is 3,
+and 4 - 2, which is 2.
+
+So we get 5. Wow.
+Let's try some more...
+
+user> (fib 5)
+8
+
+we add:
+(fib 4) which is 5,
+and (fib 3) which is 3. 5 and 3 is 8.
+
+user> (fib 6)
+13
+
+now we add
+(fib 5)
+(fib 4)
+
+(fib 5 was 8, and (fib 4) was 5, to get 13. cool.
+
+Simple recursion:
+
+(defn fibo [n]
+  (cond
+    (= n 0) 0
+    (= n 1) 1
+    :else (+ (fibo (- n 1))
+             (fibo (- n 2)))))
+
+Tail recursion:
+
+(defn fibo [n]
+  (letfn [(fib
+           [current next n]
+           (if (zero? n)
+               current
+               (fib next (+ current next) (dec n))))]
+    (fib 0 1 n)))
+
+But there is no TCO on the JVM!!!
+So we need to use recur:
+
+(defn fibo [n]
+  (letfn [(fib
+           [current next n]
+           (if (zero? n)
+               current
+               (recur next (+ current next) (dec n))))]
+    (fib 0 1 n)))
+
+Lazy seq:
+
+(defn fibo
+  ([]
+    (concat [0 1] (fibo 0 1)))
+  ([a b]
+    (let [n (+ a b)]
+      (lazy-seq
+        (cons n (fibo b n))))))
+
+Clojure offers us high-order sequence functions:
+
+(defn fibo []
+  (map first(iterate (fn [[a b]] [b (+ a b)]) [0 1])))
+
+Avoid holding the head:
+
+(def fibo (lazy-cat [0 1] (map + fibo (rest fibo))))
+
+(prevents garbage collector from reclaiming elements)
